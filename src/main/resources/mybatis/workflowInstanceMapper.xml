@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.anshishagua.mybatis.mapper.WorkflowInstanceMapper">
+    <resultMap id="workflowInstanceMapper" type="com.anshishagua.object.WorkflowInstance">
+        <id column="id" property="id" jdbcType="BIGINT"></id>
+        <result column="application_name" property="applicationName" jdbcType="VARCHAR"></result>
+        <result column="workflow_name" property="workflowName" jdbcType="VARCHAR"></result>
+        <result column="workflow_class" property="workflowClass" jdbcType="VARCHAR"></result>
+        <result column="workflow_graph" property="workflowGraph" javaType="java.util.Map" jdbcType="LONGVARCHAR" typeHandler="com.anshishagua.mybatis.typehandler.WorkflowGraphTypeHandler"></result>
+        <result column="workflow_params" property="workflowParams" javaType="java.util.Map"
+                jdbcType="LONGVARCHAR" typeHandler="com.anshishagua.mybatis.typehandler.WorkflowParamsTypeHandler"></result>
+        <result column="status" property="status" jdbcType="VARCHAR" typeHandler="com.anshishagua.mybatis.typehandler.WorkflowStatusTypeHandler"></result>
+        <result column="start_time" property="startTime" jdbcType="TIMESTAMP"></result>
+        <result column="end_time" property="endTime" jdbcType="TIMESTAMP"></result>
+        <result column="create_time" property="createTime" jdbcType="TIMESTAMP"></result>
+    </resultMap>
+    <select id="getWorkflowInstance" resultMap="workflowInstanceMapper">
+        SELECT *
+        FROM workflow_instance
+        WHERE id = #{id}
+    </select>
+
+    <select id="listWorkflow" resultMap="workflowInstanceMapper">
+        SELECT id, application_name, workflow_name, workflow_class, status, start_time, end_time
+        FROM workflow_instance
+        <if test="workflow_name != null and workflow_name != ''">
+            WHERE workflow_name = #{workflow_name}
+        </if>
+        ORDER BY id DESC
+    </select>
+
+    <update id="updateWorkflowInstance" flushCache="true">
+        UPDATE workflow_instance
+        SET status = #{status},
+            end_time = #{endTime},
+        WHERE id = #{id}
+    </update>
+
+    <insert id="addWorkflow" flushCache="true"
+            parameterType="com.anshishagua.object.WorkflowInstance"
+            useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        INSERT INTO workflow_instance(
+            application_name,
+            workflow_name,
+            workflow_class,
+            workflow_params,
+            workflow_graph,
+            status,
+            start_time,
+            end_time,
+            create_time) values(#{applicationName},
+                                #{workflowName},
+                                #{workflowClass},
+                                #{workflowParams,javaType=java.util.Map,jdbcType=LONGVARCHAR,typeHandler=com.anshishagua.mybatis.typehandler.WorkflowParamsTypeHandler},
+                                #{workflowGraph,javaType=java.util.Map,jdbcType=LONGVARCHAR,typeHandler=com.anshishagua.mybatis.typehandler.WorkflowGraphTypeHandler},
+                                #{status},
+                                #{startTime},
+                                #{endTime},
+                                #{createTime})
+    </insert>
+</mapper>

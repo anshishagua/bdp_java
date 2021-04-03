@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.anshishagua.mybatis.mapper.TaskInstanceMapper">
+    <resultMap id="taskInstanceMapper" type="com.anshishagua.object.TaskInstance">
+        <id column="id" property="id" jdbcType="BIGINT"></id>
+        <result column="workflow_instance_id" property="workflowInstanceId" jdbcType="BIGINT"></result>
+        <result column="task_name" property="taskName" jdbcType="VARCHAR"></result>
+        <result column="task_type" property="taskType" jdbcType="VARCHAR" typeHandler="com.anshishagua.mybatis.typehandler.TaskTypeTypeHandler"></result>
+        <result column="task_class" property="taskClass" jdbcType="VARCHAR"></result>
+        <result column="task_params" property="taskParams" javaType="java.util.Map"
+                jdbcType="LONGVARCHAR" typeHandler="com.anshishagua.mybatis.typehandler.TaskParamsTypeHandler"></result>
+        <result column="status" property="status" jdbcType="VARCHAR" typeHandler="com.anshishagua.mybatis.typehandler.TaskStatusTypeHandler"></result>
+        <result column="start_time" property="startTime" jdbcType="TIMESTAMP"></result>
+        <result column="end_time" property="endTime" jdbcType="TIMESTAMP"></result>
+        <result column="create_time" property="createTime" jdbcType="TIMESTAMP"></result>
+    </resultMap>
+
+    <select id="getById" resultMap="taskInstanceMapper">
+        SELECT *
+        FROM task_instance
+        WHERE id = #{taskInstanceId}
+    </select>
+
+    <select id="getTaskInstance" resultMap="taskInstanceMapper">
+        SELECT *
+        FROM task_instance
+        WHERE workflow_instance_id = #{workflowInstanceId} AND task_name = #{taskName}
+        ORDER BY id DESC
+    </select>
+
+    <update id="updateTaskInstance" flushCache="true">
+        UPDATE task_instance SET
+            task_type = #{taskType},
+            task_class = #{taskClass},
+            task_params = #{taskParams,javaType=java.util.Map,jdbcType=LONGVARCHAR,typeHandler=com.anshishagua.mybatis.typehandler.TaskParamsTypeHandler},
+            status = #{status},
+            start_time = #{startTime},
+            end_time = #{endTime}
+        WHERE workflow_instance_id = #{workflowInstanceId} AND task_name = #{taskName}
+    </update>
+
+    <insert id="addTaskInstance" flushCache="true"
+            parameterType="com.anshishagua.object.TaskInstance"
+            useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        INSERT INTO task_instance(
+            workflow_instance_id,
+            task_name,
+            task_type,
+            task_class,
+            task_params,
+            status,
+            start_time,
+            end_time,
+            create_time) values(#{workflowInstanceId},
+                                #{taskName},
+                                #{taskType},
+                                #{taskClass},
+                                #{taskParams,javaType=java.util.Map,jdbcType=LONGVARCHAR,typeHandler=com.anshishagua.mybatis.typehandler.TaskParamsTypeHandler},
+                                #{status},
+                                #{startTime},
+                                #{endTime},
+                                #{createTime})
+    </insert>
+</mapper>

@@ -1,0 +1,59 @@
+body {
+    font: 300 14px 'Helvetica Neue', Helvetica;
+}
+
+.node rect,
+.node circle,
+.node ellipse {
+    stroke: #333;
+    stroke-width: 1px;
+    fill: #fff;
+}
+
+.start rect {
+    stroke: #333;
+    stroke-width: 1px;
+    fill: #aaf;
+}
+
+.join rect {
+    stroke: #333;
+    stroke-width: 1px;
+    fill: #aff;
+}
+
+.end rect {
+    stroke: #333;
+    stroke-width: 1px;
+    fill: #aaf;
+}
+
+.edgePath {
+    stroke: #333;
+    fill: #333;
+    stroke-width: 1px;
+}
+
+.FAILED rect, .KILLED rect {
+    stroke: #333;
+    stroke-width: 1px;
+    fill: #f77;
+}
+
+.SUCCESS rect {
+    stroke: #333;
+    stroke-width: 1px;
+    fill: #7f7;
+}
+
+.RUNNING rect, WAITING rect {
+    stroke: #333;
+    stroke-width: 1px;
+    fill: #aaf;
+}
+
+.SKIP rect {
+    stroke: #333;
+    stroke-width: 1px;
+    fill: #fe5;
+}

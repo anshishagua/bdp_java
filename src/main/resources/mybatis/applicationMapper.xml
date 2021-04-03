@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.anshishagua.mybatis.mapper.ApplicationMapper">
+    <!--
+
+    -->
+    <resultMap id="applicationMapper" type="com.anshishagua.object.Application">
+        <id column="id" property="id" jdbcType="BIGINT"></id>
+        <result column="name" property="name" jdbcType="VARCHAR"></result>
+        <result column="version" property="version" jdbcType="INTEGER"></result>
+        <result column="create_time" property="createTime" jdbcType="TIMESTAMP"></result>
+    </resultMap>
+    <select id="getLatestApplication" resultMap="applicationMapper">
+        SELECT *
+        FROM application
+        WHERE name = #{applicationName}
+        ORDER BY id DESC LIMIT 1
+    </select>
+    <select id="getApplications" resultMap="applicationMapper">
+        SELECT *
+        FROM application
+        WHERE name = #{applicationName}
+        ORDER BY version DESC
+    </select>
+    <select id="getAllApplications" resultMap="applicationMapper">
+        SELECT *
+        FROM application
+        ORDER BY name, version DESC
+    </select>
+    <insert id="addApplication" flushCache="true">
+        INSERT INTO application(name, message, version, path)
+        VALUES(#{applicationName}, #{message}, #{version}, #{path})
+    </insert>
+    <delete id="deleteApplication" flushCache="true">
+        DELETE FROM application where id = #{applicationId}
+    </delete>
+</mapper>

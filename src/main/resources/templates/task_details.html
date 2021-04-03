@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Task Details</title>
+    <link rel="stylesheet" type="text/css" href="/static/css/bootstrap-4.0.0.min.css">
+    <script type="text/javascript" src="/static/js/jquery-3.5.1.min.js"></script>
+    <script type="text/javascript" src="/static/js/popper.min.js"></script>
+    <script type="text/javascript" src="/static/js/bootstrap-4.0.0.min.js"></script>
+    <script type="text/javascript" src="/static/js/ace.min.js"></script>
+    <script type="text/javascript" src="/static/js/worker-json.min.js"></script>
+    <script type="text/javascript" src="/static/js/mode-json.js"></script>
+    <script type="text/javascript" src="/static/js/theme-textmate.min.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function() {
+            var editor = ace.edit("editor");
+            editor.setHighlightActiveLine(true);
+            editor.setTheme("ace/theme/textmate");
+            editor.getSession().setTabSize(2);
+            editor.getSession().setUseWrapMode(false);
+            editor.getSession().setMode("ace/mode/json");
+            editor.setValue(JSON.stringify($("#taskParams").val(), null, '\t'));
+            editor.session.on("change", function(delta) {
+                $("#taskParams").val(editor.getValue());
+            });
+
+            $("#aaa").click(function (event) {
+                event.preventDefault();
+                var workflowInstanceId = $("#workflowInstanceId").val();
+                var taskName = $("#taskName").val();
+                var taskType = $("#taskType").val();
+                var taskClass = $("#taskClass").val();
+                var taskParams = $("#taskParams").val();
+                var skipCurrent = $("#skip-current").is(":checked");
+                var runNext = $("#run-next").is(":checked");
+
+                $.ajax({
+                    url: "/api/task/rerun",
+                    type: "POST",
+                    data: {
+                        workflowInstanceId: workflowInstanceId,
+                        taskName: taskName,
+                        taskType: taskType,
+                        taskClass: taskClass,
+                        taskParams: taskParams,
+                        skipCurrent: skipCurrent,
+                        runNext: runNext
+                    },
+                    success: function(data) {
+                        console.log(data);
+
+                        window.location.href = "/task/details?workflowInstanceId=" + workflowInstanceId + "&taskName=" + taskName;
+                    }
+                });
+            });
+
+            $(".rerun-task").click(function(event) {
+                var workflowInstanceId = $(this).parent().siblings().eq(1).html();
+                var taskName = $(this).parent().siblings().eq(2).html();
+                var taskType = $(this).parent().siblings().eq(3).html();
+                var taskClass = $(this).parent().siblings().eq(4).html();
+                var taskParams = $(this).parent().siblings().eq(5).find("pre").html();
+                console.log(taskParams);
+                $("#workflowInstanceId").val(workflowInstanceId);
+                $("#taskName").val(taskName);
+                $("#taskClass").val(taskClass);
+                editor.setValue(JSON.stringify(JSON.parse(taskParams), null, '\t'));
+                $("#taskParams").val(taskParams);
+                $("#taskType").val(taskType);
+
+                $("#myModal").modal("show");
+
+                event.preventDefault();
+
+                var array = $(this).attr("class").split(" ");
+                var taskInstanceId = 0;
+
+                for (var i = 0; i < array.length; ++i) {
+                    if (array[i].startsWith("task-")) {
+                        taskInstanceId = array[i].split("-")[1];
+                    }
+                }
+
+                console.log(taskInstanceId);
+            });
+
+            $(".kill-task").click(function(event) {
+                event.preventDefault();
+                var array = $(this).attr("class").split(" ");
+                var taskInstanceId = 0;
+
+                for (var i = 0; i < array.length; ++i) {
+                    if (array[i].startsWith("task-")) {
+                        taskInstanceId = array[i].split("-")[1];
+                    }
+                }
+
+                var workflowInstanceId = $(this).parent().siblings().eq(1).html();
+                var taskName = $(this).parent().siblings().eq(2).html();
+
+                console.log(taskInstanceId);
+
+                $.ajax({
+                    url: "/api/task/kill",
+                    type: "POST",
+                    data: {taskInstanceId: taskInstanceId},
+                    success: function(data) {
+                        console.log(data);
+                        window.location.href = "/task/details?workflowInstanceId=" + workflowInstanceId + "&taskName=" + taskName;
+                    }
+                });
+            });
+        });
+    </script>
+</head>
+<body>
+<table class="table table-striped">
+    <thead>
+    <tr>
+        <td>id</td>
+        <td>workflow id</td>
+        <td>Task Name</td>
+        <td>Task Type</td>
+        <td>Task Class</td>
+        <td>Task Params</td>
+        <td>Create Time</td>
+        <td>Start Time</td>
+        <td>End Time</td>
+        <td>Status</td>
+        <td>Log</td>
+        <td>Action</td>
+    </tr>
+    </thead>
+    <tbody>
+    <#list task_instances as task_instance>
+    <tr>
+        <td>${task_instance.id}</td>
+        <td>${task_instance.workflowInstanceId}</td>
+        <td>${task_instance.taskName}</td>
+        <td>${task_instance.taskType}</td>
+        <td>${task_instance.taskClass!}</td>
+        <td class="task-params"><pre>${task_instance.taskParamsString!}</pre></td>
+        <td>${task_instance.createTime}</td>
+        <td>${task_instance.startTime!}</td>
+        <td>${task_instance.endTime!}</td>
+        <td>${task_instance.status}</td>
+        <td><a href="/task/logs?taskInstanceId=${task_instance.id}">Log</a></td>
+
+        <td>
+            <#if (task_instance_index == 0)>
+                <#if (task_instance.status == "SUCCESS") || (task_instance.status == "FAILED") >
+                    <button class="btn btn-primary rerun-task task-${task_instance.id}">RERUN</button>
+                <#else>
+                    <button class="btn btn-primary kill-task task-${task_instance.id}">KILL</button>
+                </#if>
+            </#if>
+        </td>
+    </tr>
+    </#list>
+    </tbody>
+</table>
+<div class="modal fade" id="myModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+
+            <!-- 模态框头部 -->
+            <div class="modal-header">
+                <h4 class="modal-title">Task Params</h4>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+
+            <!-- 模态框主体 -->
+            <div class="modal-body">
+                <form class="form">
+                    <div class="form-group" hidden>
+                        <label for="workflowInstanceId">workflowInstanceId</label>
+                        <input class="form-control" type="text" readonly id="workflowInstanceId">
+                    </div>
+                    <div class="form-group">
+                        <label for="taskName">taskName</label>
+                        <input class="form-control" type="text" readonly id="taskName">
+                    </div>
+                    <div class="form-group">
+                        <label for="taskType">taskType</label>
+                        <input class="form-control" type="text" readonly id="taskType">
+                    </div>
+                    <div class="form-group">
+                        <label for="taskClass">taskClass</label>
+                        <input class="form-control" type="text" id="taskClass">
+                    </div>
+                    <div class="form-group">
+                        <label for="taskParams">taskParams</label>
+                        <textarea hidden class="form-control" type="text" id="taskParams" style="min-height: 200px"></textarea>
+                    </div>
+                    <div id="editor" style="min-height: 200px;">
+
+                    </div>
+                    <div class="form-group">
+                        <div class="form-check form-check-inline">
+                            <label class="form-check-label">
+                                <input id="skip-current" type="checkbox" class="form-check-input" value="">Skip Current
+                            </label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <label class="form-check-label">
+                                <input id="run-next" type="checkbox" class="form-check-input" value="">Run Next
+                            </label>
+                        </div>
+                    </div>
+
+                    <button id="aaa" type="submit" class="btn btn-primary">提交</button>
+                </form>
+            </div>
+
+            <!-- 模态框底部 -->
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Workflow Details</title>
+    <link rel="stylesheet" type="text/css" href="/static/css/bootstrap-4.0.0.min.css">
+    <link rel="stylesheet" type="text/css" href="/static/css/workflow_details.css">
+    <script type="text/javascript" src="/static/js/jquery-3.5.1.min.js"></script>
+    <script type="text/javascript" src="/static/js/popper.min.js"></script>
+    <script type="text/javascript" src="/static/js/bootstrap-4.0.0.min.js"></script>
+    <script type="text/javascript" src="/static/js/d3.v5.min.js"></script>
+    <script type="text/javascript" src="/static/js/dagre-d3.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function() {
+            var svg = d3.select("svg");
+            var inner = svg.select("g");
+
+            var zoom = d3.zoom().on("zoom", function () {
+                inner.attr("transform", d3.event.transform);
+            });
+            svg.call(zoom);
+
+            var g = new dagreD3.graphlib.Graph().setGraph({
+                nodesep: 20,
+                ranksep: 50,
+                rankdir: "LR",
+                marginx: 20,
+                marginy: 20
+            });
+
+            var json = ${workflowGraph};
+            var taskStatus = ${taskStatus};
+
+            console.log(taskStatus);
+
+            for (var key in json) {
+                var class_name = json[key]["taskType"];
+                var task_status = taskStatus[key];
+                console.log(json);
+
+                if (task_status != undefined) {
+                    class_name = class_name + " " + task_status;
+                } else {
+                    class_name += " RUNNING";
+                }
+
+                var label = key;
+
+                if (json[key]["running_time"] != undefined) {
+                    label = label + "\n" + "Running time: " + json[key]["running_time"];
+                }
+
+                g.setNode(key, { label: label, rx: 5, ry: 5, class: class_name });
+            }
+
+            for (var key in json) {
+                for (var i in json[key]["nextTaskNames"]) {
+                    g.setEdge(key, json[key]["nextTaskNames"][i], {
+                        curve: d3.curveBasis
+                    });
+                }
+            }
+
+            var render = new dagreD3.render();
+            render(inner, g);
+
+            var initialScale = 1;
+            svg.attr("height", g.graph().height * initialScale + 40);
+
+            svg.selectAll("g.node").on("click", function (id) {
+                url = "/task/details?workflowInstanceId=" + ${workflowInstance.id} + "&taskName=" + id;
+                window.open(url);
+            });
+        });
+    </script>
+</head>
+<body>
+    <div class="row">
+        <div class="col-12">
+            <h4>Workflow Graph</h4>
+            <svg width="100%" height="1300">
+                <g class="workflow_graph_svg" transform="translate(452,22) scale(1.2)" />
+            </svg>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-3">Workflow Name</div>
+        <div class="col-9">${workflowInstance.workflowName}</div>
+    </div>
+    <div class="row">
+        <div class="col-3">Workflow Class</div>
+        <div class="col-9">${workflowInstance.workflowClass}</div>
+    </div>
+
+</body>
+</html>

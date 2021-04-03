@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Run Workflow</title>
+    <link rel="stylesheet" type="text/css" href="/static/css/bootstrap-4.0.0.min.css">
+    <style type="text/css">
+        textarea {
+            min-height: 200px;
+        }
+        #editor {
+            min-height: 200px;
+        }
+    </style>
+    <script type="text/javascript" src="/static/js/jquery-3.5.1.min.js"></script>
+    <script type="text/javascript" src="/static/js/popper.min.js"></script>
+    <script type="text/javascript" src="/static/js/bootstrap-4.0.0.min.js"></script>
+    <script type="text/javascript" src="/static/js/ace.min.js"></script>
+    <script type="text/javascript" src="/static/js/worker-json.min.js"></script>
+    <script type="text/javascript" src="/static/js/mode-json.js"></script>
+    <script type="text/javascript" src="/static/js/theme-textmate.min.js"></script>
+
+    <script type="text/javascript">
+        $(document).ready(function() {
+            var editor = ace.edit("editor");
+            editor.setHighlightActiveLine(true);
+            editor.setTheme("ace/theme/textmate");
+            editor.getSession().setTabSize(2);
+            editor.getSession().setUseWrapMode(true);
+            editor.getSession().setMode("ace/mode/json");
+            editor.setValue($("#workflow_params").val());
+            editor.session.on("change", function(delta) {
+                $("#workflow_params").val(editor.getValue());
+            });
+            $("#run_workflow").click(function(event) {
+                event.preventDefault();
+                var workflowName = $("#workflow_name").val();
+                var workflowClass = $("#workflow_class").val();
+                var workflowPrams = $("#workflow_params").val();
+                var applicationName = $("#applicationName").val();
+
+                $.ajax({
+                    url: "/api/workflow/run",
+                    type: "POST",
+                    data: {
+                        applicationName: applicationName,
+                        workflowName: workflowName,
+                        workflowClass: workflowClass,
+                        workflowParams: workflowPrams
+                    },
+                    success: function(data) {
+                        if (data.status == "SUCCESS") {
+                            var workflow = JSON.parse(data.data.workflow);
+
+                            window.location.href = "/workflow/details?workflowInstanceId=" + workflow.id;
+                        } else {
+                            alert("Failed to run workflow: " + data.errorMessage);
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+</head>
+<body>
+<form id="form" class="form" enctype="multipart/form-data" style="width: 80%; margin-left: auto; margin-right: auto">
+    <div class="form-group">
+        <label for="applicationName">Application</label>
+        <select class="form-control custom-select" id="applicationName">
+            <#list applications as application>
+                <option value="${application}">${application}</option>
+            </#list>
+        </select>
+    </div>
+    <div class="form-group">
+        <label for="workflow_name">Workflow Name</label>
+        <input type="text" class="form-control" id="workflow_name">
+    </div>
+    <div class="form-group">
+        <label for="workflow_class">Workflow Class</label>
+        <input type="text" class="form-control" id="workflow_class" value="">
+    </div>
+    <div class="form-group">
+        <label for="workflow_params">Workflow Params</label>
+        <div class="form-control" id="workflow_params" value="" hidden></div>
+    </div>
+    <div id="editor">
+
+    </div>
+    <button id="run_workflow" type="submit" class="btn btn-primary">Run Workflow</button>
+</form>
+</body>
+</html>
